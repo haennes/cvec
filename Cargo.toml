@@ -1,0 +1,20 @@
+[package]
+name = "cvec"
+version = "0.1.0"
+edition = "2021"
+description = "a const-generics / adt-const-param compatible Vec alternative"
+documentation = "https://docs.rs/cvec"
+homepage = "https://github.com/haennes/cvec"
+repository = "https://github.com/haennes/cvec"
+license = "GPL-3.0-only"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["self_rust_tokenize"]
+self_rust_tokenize = []
+
+
+[dependencies]
+coption = "0.1.*"
+self-rust-tokenize = "0.3.*"
+quote = "1.0.*"
