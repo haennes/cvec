@@ -19,6 +19,19 @@ use self_rust_tokenize::{QuoteToTokens, SelfRustTokenize};
 #[derive(Eq, PartialEq, ConstParamTy)]
 pub struct CVec<T: Copy, const LEN: usize>([COption<T>; LEN]);
 
+macro_rules! cvec {
+    ($len: expr, $($elem: expr),*) => {
+        {
+
+            let mut temp_vec: CVec<_, $len> = CVec::empty();
+            $(
+                temp_vec.insert($elem);
+            )*
+            temp_vec
+        }
+    };
+}
+
 impl<T: Copy + Eq, const LEN: usize> CVec<T, LEN>
 where
     [(); LEN - 1]:,
@@ -74,7 +87,7 @@ where
         }
         CVec(new_inner)
     }
-    
+
     pub const fn insert(&mut self, item: T) {
         let mut idx = 0;
         while idx < LEN {
@@ -98,7 +111,7 @@ where
         self.0[idx] = COption::None;
         to_return.into_std().expect("no element present at idx")
     }
-    
+
     pub const fn compress(&mut self) {
         loop {
             if self.compress_once() {
@@ -107,7 +120,7 @@ where
             }
         }
     }
-    
+
     ///returns wether it was already continuos
     const fn compress_once(&mut self) -> bool {
         let idx = 0;
@@ -149,20 +162,51 @@ impl<T: Copy + QuoteToTokens, const LEN: usize> SelfRustTokenize for CVec<T, LEN
 #[cfg(test)]
 mod tests {
     use super::CVec;
+
     #[cfg(feature = "self_rust_tokenize")]
     use super::quote;
-    
+    #[cfg(feature = "self_rust_tokenize")]
+    use self_rust_tokenize::SelfRustTokenize;
+
     #[cfg(feature = "self_rust_tokenize")]
     #[test]
     fn quote() {
         let mut vec: CVec<u8, 10> = CVec::empty();
         vec.insert(8);
-        let vec_ts = self_rust_tokenize::SelfRustTokenize::to_tokens(&vec);
-        let expected_ts = quote!(
-            CVec :: < T , LEN > :: new_arr ([COption :: Some (8u8) , COption :: None , COption :: None , COption :: None , COption :: None , COption :: None , COption :: None , COption :: None , COption :: None , COption :: None])
-        );
+        let vec_ts = vec.to_tokens();
+        let expected_ts = quote!(CVec::<T, LEN>::new_arr([
+            COption::Some(8u8),
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None
+        ]));
         let vec_str = format!("{}", vec_ts);
         let expected_str = format!("{}", expected_ts);
         assert_eq!(vec_str, expected_str);
+    }
+
+    #[cfg(feature = "self_rust_tokenize")]
+    #[test]
+    fn cvec_macro() {
+        let vec_ts = cvec!(10, 1u16, 4u16).to_tokens();
+        let expected_ts = quote!(CVec::<T, LEN>::new_arr([
+            COption::Some(1u16),
+            COption::Some(4u16),
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None,
+            COption::None
+        ]));
+        assert_eq!(format!("{}", vec_ts), format!("{}", expected_ts));
     }
 }
